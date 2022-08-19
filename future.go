@@ -41,5 +41,5 @@ func (f *Future[T]) Wait() (T, error) {
 }
 
 func (f *Future[T]) Cancel() {
-	f.ctx.Cancel()
+	f.cancel()
 }
