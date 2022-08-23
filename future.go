@@ -2,44 +2,55 @@ package future
 
 import (
 	"context"
-	"fmt"
 	"time"
 )
 
 type Future[T any] struct {
-	ret chan T
-	ctx context.Context
+	ret    chan Result[T]
+	ctx    context.Context
 	cancel context.CancelFunc
 }
 
-func New[T any](fn func() T) *Future[T] {
-	c := make(chan T, 1)
+type Result[T any] struct {
+	dat T
+	err error
+}
+
+func New[T any](fn func() (T, error)) *Future[T] {
+	c := make(chan Result[T], 1)
 	ctx, cancel := context.WithCancel(context.Background())
 
-	go func() { c <- fn() }()
+	go func() {
+		ret, err := fn()
+		c <- Result[T]{dat: ret, err: err}
+	}()
 	return &Future[T]{ret: c, ctx: ctx, cancel: cancel}
 }
 
-func WithContext[T any](fn func() T, ctx context.Context) *Future[T] {
-	c := make(chan T, 1)
+func WithContext[T any](fn func() (T, error), ctx context.Context) *Future[T] {
+	c := make(chan Result[T], 1)
 	fctx, cancel := context.WithCancel(ctx)
 
-	go func() { c <- fn() }()
+	go func() {
+		ret, err := fn()
+		c <- Result[T]{dat: ret, err: err}
+	}()
 	return &Future[T]{ret: c, ctx: fctx, cancel: cancel}
 }
 
 func (f *Future[T]) Wait() (T, error) {
-	var result T
-	var err error
+	var result Result[T]
+
 	select {
 	case <-f.ctx.Done():
-		err = f.ctx.Err()
-	case tmp := <-f.ret:
-		result = tmp
+		result.err = f.ctx.Err()
+	case ret := <-f.ret:
+		result = ret
 	}
-	return result, err
+	return result.dat, result.err
 }
 
 func (f *Future[T]) Cancel() {
 	f.cancel()
 }
+
