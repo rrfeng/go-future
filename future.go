@@ -39,6 +39,8 @@ func (f *Future[T]) Wait() (T, error) {
 	case ret := <-f.ret:
 		result = ret
 	}
+
+	f.cancel()
 	return result.dat, result.err
 }
 

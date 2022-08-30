@@ -67,7 +67,7 @@ func TestCancel(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name:    "test context",
+			name:    "test cancel",
 			args:    args{fn: func(i int) (int, error) { time.Sleep(time.Second); return i, nil }},
 			want:    0,
 			wantErr: "context canceled",
@@ -76,14 +76,14 @@ func TestCancel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			input := 1
-			f := NewWithContext(context.Background(), func() (int, error) { return tt.args.fn(input) })
+			f := New(func() (int, error) { return tt.args.fn(input) })
 			f.cancel()
 
 			got, err := f.Wait()
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("result = %v, want %v", got, tt.want)
 			}
-			if err.Error() != tt.wantErr {
+			if err == nil || err.Error() != tt.wantErr {
 				t.Errorf("error = %v, want %v", err, tt.wantErr)
 			}
 		})
