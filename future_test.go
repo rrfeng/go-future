@@ -24,7 +24,7 @@ func TestInt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got, err := New(tt.args.fn).Wait(); !reflect.DeepEqual(got, tt.want) || err != nil {
+			if got, err := Async(tt.args.fn).Await(); !reflect.DeepEqual(got, tt.want) || err != nil {
 				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})
@@ -49,7 +49,7 @@ func TestFuncArgs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			input := 1
-			if got, err := New(func() (int, error) { return tt.args.fn(input) }).Wait(); !reflect.DeepEqual(got, tt.want) || err != nil {
+			if got, err := Async(func() (int, error) { return tt.args.fn(input) }).Await(); !reflect.DeepEqual(got, tt.want) || err != nil {
 				t.Errorf("result = %v, want %v", got, tt.want)
 			}
 		})
@@ -76,10 +76,10 @@ func TestCancel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			input := 1
-			f := New(func() (int, error) { return tt.args.fn(input) })
-			f.cancel()
+			f := Async(func() (int, error) { return tt.args.fn(input) })
+			f.Cancel()
 
-			got, err := f.Wait()
+			got, err := f.Await()
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("result = %v, want %v", got, tt.want)
 			}
@@ -111,9 +111,9 @@ func TestTimeout(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			input := 1
 			ctx, _ := context.WithTimeout(context.Background(), time.Microsecond)
-			f := NewWithContext(ctx, func() (int, error) { return tt.args.fn(input) })
+			f := AsyncWithContext(ctx, func() (int, error) { return tt.args.fn(input) })
 
-			got, err := f.Wait()
+			got, err := f.Await()
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("result = %v, want %v", got, tt.want)
 			}
