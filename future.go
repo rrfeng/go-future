@@ -2,7 +2,6 @@ package future
 
 import (
 	"context"
-	"time"
 )
 
 type Future[T any] struct {
@@ -17,17 +16,10 @@ type Result[T any] struct {
 }
 
 func New[T any](fn func() (T, error)) *Future[T] {
-	c := make(chan Result[T], 1)
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go func() {
-		ret, err := fn()
-		c <- Result[T]{dat: ret, err: err}
-	}()
-	return &Future[T]{ret: c, ctx: ctx, cancel: cancel}
+	return NewWithContext(context.Background(), fn)
 }
 
-func WithContext[T any](fn func() (T, error), ctx context.Context) *Future[T] {
+func NewWithContext[T any](ctx context.Context, fn func() (T, error)) *Future[T] {
 	c := make(chan Result[T], 1)
 	fctx, cancel := context.WithCancel(ctx)
 
@@ -53,4 +45,3 @@ func (f *Future[T]) Wait() (T, error) {
 func (f *Future[T]) Cancel() {
 	f.cancel()
 }
-
