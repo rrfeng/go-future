@@ -101,23 +101,24 @@ func TestTimeout(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name:    "test context",
-			args:    args{fn: func(i int) (int, error) { time.Sleep(time.Second); return i, nil }},
-			want:    0,
+			name:    "test timeout",
+			args:    args{fn: func(i int) (int, error) { time.Sleep(time.Millisecond); return 2, nil }},
+			want:    2,
 			wantErr: "context deadline exceeded",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			input := 1
-			ctx, _ := context.WithTimeout(context.Background(), time.Microsecond)
-			f := AsyncWithContext(ctx, func() (int, error) { return tt.args.fn(input) })
+			ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*2)
+			f := AsyncWithContext(ctx, func() (int, error) { return tt.args.fn(1) })
 
 			got, err := f.Await()
+
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("result = %v, want %v", got, tt.want)
 			}
-			if err.Error() != tt.wantErr {
+
+			if err != nil && err.Error() != tt.wantErr {
 				t.Errorf("error = %v, want %v", err, tt.wantErr)
 			}
 		})
