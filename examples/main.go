@@ -28,7 +28,7 @@ func main() {
 	input := "test args"
 	ctx, cancel := context.WithCancel(context.Background())
 	f2 := future.AsyncWithContext(ctx, func() (string, error) { return MyFunc2(input) })
-	defer cancel()
+	defer cancel() // same as f2.cancel()
 
 	r1, e1 := f1.Await()
 	r2, e2 := f2.Await()
